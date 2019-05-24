@@ -1,12 +1,81 @@
 const express = require('express');
 const helmet = require('helmet');
 
+const knex = require('knex');
+
+const knexConfig = {
+  client: 'sqlite3',
+  connection: {
+    filename: './data/lambda.sqlite3'
+  },
+  useNullAsDefault: true
+}
+
+const db = knex(knexConfig);
+
 const server = express();
 
 server.use(express.json());
 server.use(helmet());
 
 // endpoints here
+server.get('/api/zoos', (req, res) => {
+  db('zoos')
+    .then(animals => {
+      res.status(200).json(animals);
+    })
+    .catch(err => {
+      res.status(500).json(err);
+    });
+});
+
+server.get('/api/zoos/:id', (req, res) => {
+  db('zoos')
+    .where({ id: req.params.id })
+    .first()
+    .then(zoo => {
+      if(zoo) {
+        res.status(200).json(zoo);
+      } else {
+        res.status(404).json({ message: 'Zoo not found' });
+      }
+    })
+    .catch(err => {
+      res.status(500).json(err);
+    });
+});
+
+server.post('/api/zoos', (req, res) => {
+  const name = req.body.name;
+  db('zoos')
+    .insert(req.body)
+    .then(results => {
+      return db('zoos')
+      .where({ id: results[0] })
+      .first()
+      .then(zoo => {
+        if(!name) {
+          res.status(400).json({ error: 'Name required' });
+        } else {
+          res.status(201).json(zoo.id);
+        }
+      })
+      .catch(err => {
+        res.status(500).json(err);
+      })
+    })
+    .catch(err => {
+      res.status(500).json(err);
+    });
+});
+
+// server.put('/api/zoos/:id', (req, res) => {
+
+// });
+
+// server.delete('/api/zoos/:id', (req, res) => {
+
+// });
 
 const port = 3300;
 server.listen(port, function() {
