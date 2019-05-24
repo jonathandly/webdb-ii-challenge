@@ -69,9 +69,21 @@ server.post('/api/zoos', (req, res) => {
     });
 });
 
-// server.put('/api/zoos/:id', (req, res) => {
-
-// });
+server.put('/api/zoos/:id', (req, res) => {
+  db('zoos')
+    .where({ id: req.params.id })
+    .update(req.body)
+    .then(name => {
+      if(!name) {
+        res.status(404).json({ message: 'Record doesn\'t exist' });
+      } else {
+        res.status(200).json({ message: 'Record updated' });
+      }
+    })
+    .catch(err => {
+      res.status(500).json(err);
+    });
+});
 
 // server.delete('/api/zoos/:id', (req, res) => {
 
